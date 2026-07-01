@@ -1,0 +1,39 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "jobflow",
+    },
+    "apps/api": {
+      "name": "@jobflow/api",
+      "version": "0.1.0",
+    },
+    "apps/dashboard": {
+      "name": "@jobflow/dashboard",
+    },
+    "apps/worker": {
+      "name": "@jobflow/worker",
+      "version": "0.1.0",
+    },
+    "packages/sdk": {
+      "name": "@jobflow/sdk",
+      "version": "0.1.0",
+    },
+    "packages/shared": {
+      "name": "@jobflow/shared",
+      "version": "0.1.0",
+    },
+  },
+  "packages": {
+    "@jobflow/api": ["@jobflow/api@workspace:apps/api"],
+
+    "@jobflow/dashboard": ["@jobflow/dashboard@workspace:apps/dashboard"],
+
+    "@jobflow/sdk": ["@jobflow/sdk@workspace:packages/sdk"],
+
+    "@jobflow/shared": ["@jobflow/shared@workspace:packages/shared"],
+
+    "@jobflow/worker": ["@jobflow/worker@workspace:apps/worker"],
+  }
+}
