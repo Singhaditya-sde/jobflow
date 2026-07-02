@@ -1,6 +1,6 @@
 import app from "./app";
 import { env } from "./config/env";
-import { redis } from "./config/redis";
+import { redis } from "./infrastructure/redis/client";
 
 async function bootstrap() {
   try{
