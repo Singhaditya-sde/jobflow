@@ -1,7 +1,18 @@
 import app from "./app";
+import { env } from "./config/env";
+import { redis } from "./config/redis";
 
-const PORT = process.env.PORT || 3000;
+async function bootstrap() {
+  try{
+    await redis.ping();
 
-app.listen(PORT, ()=> {
-  console.log(`API listening on ${PORT}`);
-});
+    app.listen(env.PORT, () => {
+      console.log(`API is listening on port ${env.PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to Connect to Redis");
+    process.exit(1);
+  }
+}
+
+bootstrap();
