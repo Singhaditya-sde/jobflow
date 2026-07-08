@@ -12,5 +12,8 @@
     "build": "bun run --workspaces build",
     "lint": "bun run --workspaces lint",
     "test": "bun run --workspaces test"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.0"
   }
 }

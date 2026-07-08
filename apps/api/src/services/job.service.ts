@@ -1,4 +1,5 @@
-import { redis } from "../infrastructure/redis/client"
+import { JobStatus } from "@jobflow/shared";
+import { redis } from "../infrastructure/redis/client";
 import { generateJobId } from "../utils/id";
 
 export interface CreateJobDto {
@@ -8,21 +9,36 @@ export interface CreateJobDto {
 }
 
 export async function CreateJob(data: CreateJobDto) {
+  const jobId = generateJobId();
 
   const job = {
-    id: generateJobId(),
+    id: jobId,
     type: data.type,
     payload: data.payload,
     priority: data.priority,
-    status: "Queued",
+    status: JobStatus.QUEUED,
     attempts: 0,
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 
+  // Store the job metadata
+  await redis.hset(`jobflow:jobs:${jobId}`, {
+    id: job.id,
+    type: job.type,
+    payload: JSON.stringify(job.payload),
+    priority: job.priority.toString(),
+    status: job.status,
+    attempts: job.attempts.toString(),
+    createdAt: job.createdAt,
+    updatedAt: job.updatedAt,
+  });
+
+  // Store only the Job ID in the queue
   await redis.zadd(
     "jobflow:queue",
     job.priority,
-    JSON.stringify(job)
+    job.id
   );
 
   return job;
