@@ -18,6 +18,7 @@ export async function CreateJob(data: CreateJobDto) {
     priority: data.priority,
     status: JobStatus.QUEUED,
     attempts: 0,
+    maxAttempts: 3,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -30,6 +31,7 @@ export async function CreateJob(data: CreateJobDto) {
     priority: job.priority.toString(),
     status: job.status,
     attempts: job.attempts.toString(),
+    maxAttempts: job.maxAttempts.toString(),
     createdAt: job.createdAt,
     updatedAt: job.updatedAt,
   });
