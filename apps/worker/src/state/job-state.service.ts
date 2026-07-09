@@ -22,11 +22,15 @@ export class JobStateService {
 
   async saveError(jobId: string, error: string) {
     await redis.hset(
-      `jobflow:jobs${jobId}`,
+      `jobflow:jobs:${jobId}`,
       {
         error,
         updatedAt: new Date().toISOString()
       }
     );
+  }
+
+  async getJob(jobId: string) {
+  return await redis.hgetall(`jobflow:jobs:${jobId}`);
   }
 }
