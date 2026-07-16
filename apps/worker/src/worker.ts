@@ -1,4 +1,4 @@
-import { WorkerService } from "./services/ worker.service";
+import { WorkerService } from "./services/worker.service";
 import { WORKER_ID } from "./utils/worker-info";
 import { env } from "./config/env";
 import { redis } from "./infrastructure/redis/client";
