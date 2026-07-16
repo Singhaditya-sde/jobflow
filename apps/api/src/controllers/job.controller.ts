@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { redis } from "../infrastructure/redis/client";
 import { CreateJob } from "../services/job.service";
+import { jobsCreatedTotal } from "../metrics/job.metrics";
 
 export async function createJobController(
   req: Request,
@@ -21,6 +22,8 @@ export async function createJobController(
       priority: priority ?? 1,
       payload,
     });
+
+    jobsCreatedTotal.inc();
 
     return res.status(201).json({
       success: true,

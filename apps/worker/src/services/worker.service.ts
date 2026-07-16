@@ -1,39 +1,43 @@
 import { redis } from "../infrastructure/redis/client";
 import { JobStatus, JobType } from "@jobflow/shared";
-
 import { RetryService } from "./retry.service";
 import { DelayedQueueService } from "./delayed-queue.service";
-
 import { JobStateService } from "../state/job-state.service";
 import { SendEmailHandler } from "../handlers/send-email.handler";
-
 import { WORKER_ID } from "../utils/worker-info";
 import { workerMetrics } from "../utils/worker-metrics";
+import {
+  jobsCompletedTotal,
+  jobsFailedTotal,
+  jobsRetryTotal,
+} from "../metrics/worker.metrics";
 
 export class WorkerService {
   private state = new JobStateService();
   private retryService = new RetryService();
   private delayedQueue = new DelayedQueueService();
 
-  async poll() {
+  async poll(): Promise<void> {
     const result = await redis.zpopmin("jobflow:queue");
-
     if (result.length === 0) {
       return;
     }
 
     const [jobId] = result;
-
     const job = await redis.hgetall(
       `jobflow:jobs:${jobId}`
     );
 
     if (!job.id) {
-      console.log(`[Worker ${WORKER_ID}] Job metadata missing`);
+      console.log(
+        `[Worker ${WORKER_ID}] Job metadata missing`
+      );
       return;
     }
 
-    console.log(`[Worker ${WORKER_ID}] Job Found`);
+    console.log(
+      `[Worker ${WORKER_ID}] Job Found`
+    );
 
     await this.state.updateStatus(
       job.id,
@@ -62,7 +66,10 @@ export class WorkerService {
         JobStatus.COMPLETED
       );
 
+      // In-memory metrics
       workerMetrics.processedJobs++;
+      // Prometheus metrics
+      jobsCompletedTotal.inc();
 
       console.log(
         `[Worker ${WORKER_ID}] Status -> COMPLETED`
@@ -73,8 +80,6 @@ export class WorkerService {
       );
 
     } catch (error) {
-      workerMetrics.failedJobs++;
-
       await this.state.incrementAttempts(job.id);
 
       await this.state.saveError(
@@ -82,18 +87,24 @@ export class WorkerService {
         (error as Error).message
       );
 
-      const updatedJob = await this.state.getJob(job.id);
+      const updatedJob = await this.state.getJob(
+        job.id
+      );
 
       const attempts = Number(updatedJob.attempts);
       const maxAttempts = Number(updatedJob.maxAttempts);
 
       if (attempts < maxAttempts) {
-        const delay = this.retryService.getDelay(attempts);
+        const delay =
+          this.retryService.getDelay(attempts);
 
         await this.state.updateStatus(
           job.id,
           JobStatus.RETRYING
         );
+
+        // Prometheus metric
+        jobsRetryTotal.inc();
 
         await this.delayedQueue.schedule(
           job.id,
@@ -105,6 +116,11 @@ export class WorkerService {
         );
 
       } else {
+        // In-memory metrics
+        workerMetrics.failedJobs++;
+        // Prometheus metrics
+        jobsFailedTotal.inc();
+
         await this.state.updateStatus(
           job.id,
           JobStatus.FAILED
