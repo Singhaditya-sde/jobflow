@@ -1,9 +1,14 @@
 import { redis } from "../infrastructure/redis/client";
 import { JobStatus, JobType } from "@jobflow/shared";
+
 import { RetryService } from "./retry.service";
 import { DelayedQueueService } from "./delayed-queue.service";
+
 import { JobStateService } from "../state/job-state.service";
 import { SendEmailHandler } from "../handlers/send-email.handler";
+
+import { WORKER_ID } from "../utils/worker-info";
+import { workerMetrics } from "../utils/worker-metrics";
 
 export class WorkerService {
   private state = new JobStateService();
@@ -13,7 +18,7 @@ export class WorkerService {
   async poll() {
     const result = await redis.zpopmin("jobflow:queue");
 
-    if(result.length === 0) {
+    if (result.length === 0) {
       return;
     }
 
@@ -23,29 +28,31 @@ export class WorkerService {
       `jobflow:jobs:${jobId}`
     );
 
-    if(!job.id) {
-      console.log("Job metadata missing");
+    if (!job.id) {
+      console.log(`[Worker ${WORKER_ID}] Job metadata missing`);
       return;
     }
 
-    console.log("Job Found");
+    console.log(`[Worker ${WORKER_ID}] Job Found`);
 
     await this.state.updateStatus(
       job.id,
       JobStatus.PROCESSING
     );
 
-    console.log("Status -> PROCESSING");
+    console.log(
+      `[Worker ${WORKER_ID}] Status -> PROCESSING`
+    );
 
-    try{
-      switch(job.type) {
+    try {
+      switch (job.type) {
         case JobType.SEND_EMAIL:
           await new SendEmailHandler().handler({
             ...job,
             payload: JSON.parse(job.payload),
           });
           break;
-        
+
         default:
           throw new Error("Unknown Job");
       }
@@ -55,9 +62,19 @@ export class WorkerService {
         JobStatus.COMPLETED
       );
 
-      console.log("Status -> COMPLECTED");
+      workerMetrics.processedJobs++;
+
+      console.log(
+        `[Worker ${WORKER_ID}] Status -> COMPLETED`
+      );
+
+      console.log(
+        `[Worker ${WORKER_ID}] Processed Jobs: ${workerMetrics.processedJobs}`
+      );
 
     } catch (error) {
+      workerMetrics.failedJobs++;
+
       await this.state.incrementAttempts(job.id);
 
       await this.state.saveError(
@@ -84,18 +101,23 @@ export class WorkerService {
         );
 
         console.log(
-          `Retry ${attempts}/${maxAttempts} after ${delay} ms`
+          `[Worker ${WORKER_ID}] Retry ${attempts}/${maxAttempts} after ${delay} ms`
         );
-        
+
       } else {
         await this.state.updateStatus(
           job.id,
           JobStatus.FAILED
         );
 
-        console.log("Status -> FAILED");
+        console.log(
+          `[Worker ${WORKER_ID}] Status -> FAILED`
+        );
+
+        console.log(
+          `[Worker ${WORKER_ID}] Failed Jobs: ${workerMetrics.failedJobs}`
+        );
       }
     }
   }
 }
-
