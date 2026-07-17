@@ -1,6 +1,7 @@
 import { JobStatus } from "@jobflow/shared";
 import { redis } from "../infrastructure/redis/client";
 import { generateJobId } from "../utils/id";
+import { JobRepository } from "../repositories/job.repository";
 
 export interface CreateJobDto {
   type: string;
@@ -44,4 +45,12 @@ export async function CreateJob(data: CreateJobDto) {
   );
 
   return job;
+}
+
+export class JobService {
+  private repository = new JobRepository();
+
+  async getAllJobs() {
+    return this.repository.findAll();
+  }
 }
