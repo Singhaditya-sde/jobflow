@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "jobflow-api"
+
+    static_configs:
+      - targets:
+          - host.docker.internal:3000
+
+  - job_name: "jobflow-worker"
+
+    static_configs:
+      - targets:
+          - host.docker.internal:3001
