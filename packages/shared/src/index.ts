@@ -8,5 +8,7 @@
 // export * from "./queue/queue.interface";
 
 export * from "./job";
+export * from "./database";
+export * from "./database/job-history.repository";
 // export * from "./queue";
 // export * from "./worker";
