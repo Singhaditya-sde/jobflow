@@ -15,7 +15,7 @@ export class Worker {
 
       while (true) {
         await this.workerService.poll();
-        await sleep(env.Worker.pollInterval);
+        await sleep(env.POLL_INTERVAL);
       }
     } catch (error) {
       console.error(

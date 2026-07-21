@@ -1,21 +1,14 @@
 import "dotenv/config";
 
-function required(name: string): string {
-  const value = process.env[name];
-
-  if(!value) {
-    throw new Error(`Missing required enviroment variables: ${name}`);
-  }
-  return value;
-}
-
 export const env = {
-  redis: {
-    host: required("REDIS_HOST"),
-    port: Number(required("REDIS_PORT")),
-  },
+  NODE_ENV: process.env.NODE_ENV || "development",
 
-  Worker: {
-    pollInterval: Number(process.env.pollInterval ?? 1000),
-  },
-} as const;
+  REDIS_URL:
+    process.env.REDIS_URL || "redis://localhost:6379",
+
+  DATABASE_URL:
+    process.env.DATABASE_URL ||
+    "postgresql://jobflow:jobflow@localhost:5432/jobflow",
+
+  POLL_INTERVAL: Number(process.env.POLL_INTERVAL) || 1000,
+};
