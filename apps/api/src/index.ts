@@ -3,14 +3,14 @@ import { env } from "./config/env";
 import { redis } from "./infrastructure/redis/client";
 
 async function bootstrap() {
-  try{
+  try {
     await redis.ping();
 
     app.listen(env.PORT, () => {
-      console.log(`API is listening on port ${env.PORT}`);
+      console.log(`🚀 API listening on port ${env.PORT}`);
     });
   } catch (error) {
-    console.error("Failed to Connect to Redis");
+    console.error("❌ Failed to connect to Redis:", error);
     process.exit(1);
   }
 }

@@ -10,9 +10,20 @@ export async function getAllJobsController(
   try {
     const jobs = await service.getAllJobs();
 
-    res.status(200).json(jobs);
+    const formattedJobs = jobs.map((job) => ({
+      ...job,
+      priority: Number(job.priority),
+      attempts: Number(job.attempts),
+      maxAttempts: Number(job.maxAttempts),
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: formattedJobs,
+    });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
+      success: false,
       message: "Failed to fetch jobs",
       error: (error as Error).message,
     });
