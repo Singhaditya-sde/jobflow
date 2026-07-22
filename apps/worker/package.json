@@ -10,8 +10,8 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit",
 
-    "start": "node dist/index.js",
-    "start:delayed": "node dist/delayed.js"
+    "start": "bun dist/index.js",
+    "start:delayed": "bun dist/delayed.js"
   },
   "dependencies": {
     "@jobflow/shared": "workspace:*",
